@@ -38,7 +38,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	// Where we retrieve users from db
 	@Override
-	@Bean // to be instanciated
+	@Bean // to be instanciated by the Java Config
 	protected UserDetailsService userDetailsService() {
 		UserDetails annaSmithUser = User.builder()
 				.username("annasmith")
