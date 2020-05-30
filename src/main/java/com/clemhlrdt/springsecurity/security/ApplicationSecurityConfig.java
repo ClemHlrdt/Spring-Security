@@ -30,8 +30,8 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 		// authorize all requests authenticated with basic authentication
 		http
 				.authorizeRequests()
-				.antMatchers("/", "index", "/css/", "/js/*")
-				.permitAll()
+				.antMatchers("/", "index", "/css/", "/js/*").permitAll()
+				.antMatchers("/api/**").hasRole(STUDENT.name())
 				.anyRequest()
 				.authenticated()
 				.and()
