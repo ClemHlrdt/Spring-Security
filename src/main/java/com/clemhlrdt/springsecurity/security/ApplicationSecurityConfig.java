@@ -1,22 +1,21 @@
 package com.clemhlrdt.springsecurity.security;
 
+import com.clemhlrdt.springsecurity.auth.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.clemhlrdt.springsecurity.security.ApplicationUserRole.*;
+import static com.clemhlrdt.springsecurity.security.ApplicationUserRole.STUDENT;
 
 @Configuration
 @EnableWebSecurity
@@ -24,10 +23,12 @@ import static com.clemhlrdt.springsecurity.security.ApplicationUserRole.*;
 public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private final PasswordEncoder passwordEncoder;
+	private final ApplicationUserService applicationUserService;
 
 	@Autowired
-	public ApplicationSecurityConfig(PasswordEncoder passwordEncoder) {
+	public ApplicationSecurityConfig(PasswordEncoder passwordEncoder, ApplicationUserService applicationUserService) {
 		this.passwordEncoder = passwordEncoder;
+		this.applicationUserService = applicationUserService;
 	}
 
 	@Override
@@ -64,36 +65,17 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 					.logoutSuccessUrl("/login");
 	}
 
-	// Where we retrieve users from db
 	@Override
-	@Bean // to be instantiated by the Java Config
-	protected UserDetailsService userDetailsService() {
-		UserDetails annaSmithUser = User.builder()
-				.username("annasmith")
- 				.password(passwordEncoder.encode("password"))
-				.authorities(STUDENT.getGrantedAuthorities())
-				//.roles(STUDENT.name()) // ROLE_STUDENT
-				.build();
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.authenticationProvider(daoAuthenticationProvider());
+	}
 
-		UserDetails lindaUser = User.builder()
-				.username("linda")
-				.password(passwordEncoder.encode("password123"))
-				.authorities(ADMIN.getGrantedAuthorities())
-				//.roles(ADMIN.name())
-				.build();
-
-		UserDetails tomUser = User.builder()
-				.username("tom")
-				.password(passwordEncoder.encode("password"))
-				.authorities(ADMINTRAINEE.getGrantedAuthorities())
-				//.roles(ADMINTRAINEE.name()) // ROLE_ADMINTRAINEE
-				.build();
-
-		return new InMemoryUserDetailsManager(
-				annaSmithUser,
-				lindaUser,
-				tomUser
-		);
+	@Bean
+	public DaoAuthenticationProvider daoAuthenticationProvider(){
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+		provider.setPasswordEncoder(passwordEncoder);
+		provider.setUserDetailsService(applicationUserService);
+		return provider;
 	}
 }
 
