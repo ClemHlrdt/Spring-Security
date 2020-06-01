@@ -12,7 +12,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import static com.clemhlrdt.springsecurity.security.ApplicationUserRole.*;
 
@@ -32,15 +31,16 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		// authorize all requests authenticated with basic authentication
 		http
-				.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-				.and()
+				/*.csrf().csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+				.and()*/
+				.csrf().disable()
 				.authorizeRequests()
 				.antMatchers("/", "index", "/css/", "/js/*").permitAll()
 				.antMatchers("/api/**").hasRole(STUDENT.name())
 				.anyRequest()
 				.authenticated()
 				.and()
-				.httpBasic();
+				.formLogin();
 	}
 
 	// Where we retrieve users from db
