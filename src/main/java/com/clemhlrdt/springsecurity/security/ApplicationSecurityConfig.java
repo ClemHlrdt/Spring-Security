@@ -40,7 +40,9 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 				.anyRequest()
 				.authenticated()
 				.and()
-				.formLogin();
+				.formLogin()
+				.loginPage("/login").permitAll()
+				.defaultSuccessUrl("/courses", true);
 	}
 
 	// Where we retrieve users from db
