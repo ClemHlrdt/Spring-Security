@@ -19,54 +19,53 @@ import java.util.Date;
 
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
-	private final AuthenticationManager authenticationManager;
-	private final JwtConfig jwtConfig;
-	private final SecretKey secretKey;
+    private final AuthenticationManager authenticationManager;
+    private final JwtConfig jwtConfig;
+    private final SecretKey secretKey;
 
-	public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager authenticationManager,
+    public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager authenticationManager,
 													  JwtConfig jwtConfig,
 													  SecretKey secretKey) {
-		this.authenticationManager = authenticationManager;
-		this.jwtConfig = jwtConfig;
-		this.secretKey = secretKey;
-	}
+        this.authenticationManager = authenticationManager;
+        this.jwtConfig = jwtConfig;
+        this.secretKey = secretKey;
+    }
 
-	@Override
-	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request,
+												HttpServletResponse response) throws AuthenticationException {
 
-		try {
-			// parse the username / password from the request
-			UsernameAndPasswordAuthenticationRequest authenticationRequest = new ObjectMapper()
-					.readValue(request.getInputStream(), UsernameAndPasswordAuthenticationRequest.class);
+        try {
+            UsernameAndPasswordAuthenticationRequest authenticationRequest = new ObjectMapper()
+                    .readValue(request.getInputStream(), UsernameAndPasswordAuthenticationRequest.class);
 
-			// create a new authentication with UsernamePasswordAuthenticationToken
-			Authentication authentication = new UsernamePasswordAuthenticationToken(
-					authenticationRequest.getUsername(),
-					authenticationRequest.getPassword()
-			);
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    authenticationRequest.getUsername(),
+                    authenticationRequest.getPassword()
+            );
 
-			Authentication authenticate = authenticationManager.authenticate(authentication);
-			return authenticate;
+            Authentication authenticate = authenticationManager.authenticate(authentication);
+            return authenticate;
 
-		} catch (IOException e){
-			throw new RuntimeException(e);
-		}
-	}
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-	// Invoked on successful authentication
-	@Override
-	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+    }
 
-		// Create a token
-		String token = Jwts.builder()
-				.setSubject(authResult.getName())
-				.claim("authorities", authResult.getAuthorities())
-				.setIssuedAt(new Date())
-				.setExpiration(java.sql.Date.valueOf(LocalDate.now().plusDays(jwtConfig.getTokenExpirationAfterDays())))
-				.signWith(secretKey)
-				.compact();
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request,
+											HttpServletResponse response,
+											FilterChain chain,
+											Authentication authResult) throws IOException, ServletException {
+        String token = Jwts.builder()
+                .setSubject(authResult.getName())
+                .claim("authorities", authResult.getAuthorities())
+                .setIssuedAt(new Date())
+                .setExpiration(java.sql.Date.valueOf(LocalDate.now().plusDays(jwtConfig.getTokenExpirationAfterDays())))
+                .signWith(secretKey)
+                .compact();
 
-		// add token to response
-		response.addHeader(jwtConfig.getAuthorizationHeader(), jwtConfig.getTokenPrefix() + token);
-	}
+        response.addHeader(jwtConfig.getAuthorizationHeader(), jwtConfig.getTokenPrefix() + token);
+    }
 }
